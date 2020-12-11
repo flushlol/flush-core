@@ -7,33 +7,27 @@ contract TokensManager is Ownable {
 
     PaperToken public paper;
 
-    uint256 internal paperReward = 1e18;
+    uint256 public paperReward = 1e18;
     address internal router;
     address public developers;
-    address[] public availableTokens;
 
     address public farmContract;
 
-    uint256 internal farmPart = 3; // default param
-    uint256 internal burnedPart = 7; // default param
+    uint256 public farmPart = 3; // default param
+    uint256 public lpPart = 7; // default param
 
     uint256 internal approveAmount =
     115792089237316195423570985008687907853269984665640564039457584007913129639935;
 
-    event AddNewToken(address token, uint256 tokenId);
-    event UpdateToken(address previousToken, address newToken, uint256 tokenId);
+    mapping(address => bool) public approvedTokens;
 
-    function addTokens(address _token) public onlyOwner returns (uint256) {
-        availableTokens.push(_token);
-        emit AddNewToken(_token, availableTokens.length);
+    event AddNewToken(address token);
+
+    function approveToken(address _token) public returns (bool) {
         IERC20(_token).approve(router, approveAmount);
-        return availableTokens.length;
-    }
-
-    function setToken(uint256 _tokenId, address _token) public onlyOwner {
-        emit UpdateToken(availableTokens[_tokenId], _token, _tokenId);
-        availableTokens[_tokenId] = _token;
-        IERC20(_token).approve(router, 1e66);
+        approvedTokens[_token] = true;
+        emit AddNewToken(_token);
+        return true;
     }
 
     function setApproveAmount(uint256 _newAmount) public onlyOwner {
@@ -42,18 +36,14 @@ contract TokensManager is Ownable {
 
     function swap(
         uint256 _tokenAmount,
-        address _a,
-        address _b,
-        uint256 amountMinArray,
+        uint256 _minAmount,
+        address[] memory _path,
         address _recipient
     ) internal returns (uint256) {
-        address[] memory _path = new address[](2);
-        _path[0] = _a;
-        _path[1] = _b;
         uint256[] memory amounts_ =
         IUniswapV2Router02(router).swapExactTokensForTokens(
             _tokenAmount,
-            amountMinArray,
+            _minAmount,
             _path,
             _recipient,
             now + 1200
@@ -66,46 +56,30 @@ contract TokensManager is Ownable {
         paper.mintPaper(developers, paperReward.div(10));
     }
 
-    function transferTokens(uint256 _tokenId, uint256 _tokenAmount) internal {
-        IERC20(availableTokens[_tokenId]).transferFrom(
+    function transferTokens(address _token, uint256 _tokenAmount) internal {
+        IERC20(_token).transferFrom(
             msg.sender,
             address(this),
             _tokenAmount
         );
     }
 
-    function getAmountTokens(
-        address _a,
-        address _b,
-        uint256 _tokenAmount
+    function getAmountOut(
+        uint256 _tokenAmount,
+        address[] memory _path
     ) public view returns (uint256) {
-        address[] memory _path = new address[](2);
-        _path[0] = _a;
-        _path[1] = _b;
         uint256[] memory amountMinArray =
         IUniswapV2Router02(router).getAmountsOut(_tokenAmount, _path);
 
-        return amountMinArray[1];
+        return amountMinArray[amountMinArray.length - 1];
     }
 
     function setPaperReward(uint256 _newAmount) public onlyOwner {
         paperReward = _newAmount;
     }
 
-    function getPaperReward() public view returns (uint256) {
-        return paperReward;
-    }
-
-    function getBurnedPart() public view returns (uint256) {
-        return burnedPart;
-    }
-
-    function getFarmPart() public view returns (uint256) {
-        return farmPart;
-    }
-
-    function setBurnedPart(uint256 _newAmount) public onlyOwner {
-        burnedPart = _newAmount;
+    function setLPPart(uint256 _newAmount) public onlyOwner {
+        lpPart = _newAmount;
     }
 
     function setFarmPart(uint256 _newAmount) public onlyOwner {
