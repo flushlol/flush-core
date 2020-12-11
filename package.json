@@ -1,0 +1,27 @@
+{
+  "name": "@flushlol/flush-core",
+  "description": "\uD83C\uDF0A\uD83D\uDEBD Core contracts for the Flush.lol project",
+  "version": "1.0.1",
+  "homepage": "https://flush.lol",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Uniswap/uniswap-v2-core"
+  },
+  "keywords": [
+    "uniswap",
+    "ethereum",
+    "v2",
+    "core",
+    "uniswap-v2"
+  ],
+  "files": [
+    "contracts",
+    "build"
+  ],
+  "engines": {
+    "node": ">=10"
+  },
+  "scripts": {
+    "prettier": "prettier --write 'contracts/*.sol'"
+  }
+}
